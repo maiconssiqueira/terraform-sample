@@ -8,6 +8,9 @@ resource "aws_vpc" "default" {
 }
 
 resource "aws_subnet" "public" {
+  depends_on = [
+    aws_vpc.default
+  ]
   vpc_id                                      = aws_vpc.default.id
   cidr_block                                  = "10.0.1.0/24"
   availability_zone                           = var.availability_zone
@@ -41,6 +44,10 @@ resource "aws_route_table" "rt" {
 }
 
 resource "aws_route_table_association" "subnet-public" {
+  depends_on = [
+    aws_internet_gateway.igw,
+    aws_route_table.rt
+  ]
   subnet_id      = aws_subnet.public.id
   route_table_id = aws_route_table.rt.id
 }
@@ -90,6 +97,9 @@ resource "aws_ebs_volume" "principal_volume" {
 }
 
 resource "aws_instance" "principal_instance" {
+  depends_on = [
+    aws_ebs_volume.principal_volume
+  ]
   count             = var.instances_count
   ami               = "ami-05fa00d4c63e32376" #Amazon Linux 2
   instance_type     = "t3.micro"
@@ -110,6 +120,9 @@ resource "aws_instance" "principal_instance" {
 }
 
 resource "aws_volume_attachment" "principal_volume_attached" {
+  depends_on = [
+    aws_ebs_volume.principal_volume
+  ]
   count       = var.instances_count
   device_name = "/dev/sdb"
   volume_id   = aws_ebs_volume.principal_volume.id
